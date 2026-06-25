@@ -1,0 +1,47 @@
+// PredictMind market service schema.
+// PostgreSQL via the portable DATABASE_URL contract. The `market_candles`
+// table is time-series data; in production it becomes a TimescaleDB hypertable
+// (see education notes) — locally it is a regular indexed table.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CoinStatus {
+  ACTIVE
+  DISABLED
+}
+
+model Coin {
+  id        String     @id @default(uuid()) @db.Uuid
+  symbol    String     @unique
+  name      String
+  status    CoinStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  candles   MarketCandle[]
+
+  @@map("coins")
+}
+
+model MarketCandle {
+  id        BigInt   @id @default(autoincrement())
+  coinId    String   @db.Uuid
+  coin      Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  timeframe String
+  openTime  DateTime
+  open      Decimal  @db.Decimal(20, 8)
+  high      Decimal  @db.Decimal(20, 8)
+  low       Decimal  @db.Decimal(20, 8)
+  close     Decimal  @db.Decimal(20, 8)
+  volume    Decimal  @db.Decimal(30, 8)
+
+  @@unique([coinId, timeframe, openTime])
+  @@index([coinId, timeframe, openTime])
+  @@map("market_candles")
+}

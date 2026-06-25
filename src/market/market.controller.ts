@@ -1,13 +1,37 @@
-import { Controller, Get } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { CandleDto, MarketService } from "./market.service";
+import { ImportCandlesDto } from "./dto/import-candles.dto";
 
-// Market data, coins and technical indicators
+@ApiTags("market")
 @Controller("market")
 export class MarketController {
-  @Get()
-  info(): { service: string; description: string } {
-    return {
-      service: "market",
-      description: "Market data, coins and technical indicators",
-    };
+  constructor(private readonly market: MarketService) {}
+
+  // Trigger an import from the public data source (admin/scheduled in prod).
+  @Post("import")
+  import(@Body() dto: ImportCandlesDto): Promise<{ imported: number }> {
+    return this.market.importCandles(dto.symbol, dto.timeframe, dto.limit);
+  }
+
+  @Get("candles")
+  candles(
+    @Query("symbol") symbol: string,
+    @Query("timeframe") timeframe: string,
+    @Query("limit") limit?: string,
+  ): Promise<CandleDto[]> {
+    return this.market.getCandles(
+      symbol,
+      timeframe,
+      limit ? Number(limit) : 100,
+    );
+  }
+
+  @Get("latest")
+  latest(
+    @Query("symbol") symbol: string,
+    @Query("timeframe") timeframe: string,
+  ): Promise<CandleDto | null> {
+    return this.market.getLatest(symbol, timeframe);
   }
 }
