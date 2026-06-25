@@ -11,6 +11,7 @@ Read in order:
 | 1 | [01-overview.md](01-overview.md) | What this service is for; what a "candle" / OHLCV is |
 | 2 | [02-coins-catalog.md](02-coins-catalog.md) | The coin list: model, seeding, endpoints |
 | 3 | [03-candles-and-binance.md](03-candles-and-binance.md) | Storing price history + importing real data from Binance |
+| 4 | [04-indicators.md](04-indicators.md) | The indicator engine: RSI/MACD/EMA/SMA/ATR/VWAP from candles |
 
 > New to "server", "API", "database", "Prisma", "DTO"? The auth service's notes
 > (`predictmind-auth-service/education/`) teach those from scratch. This folder

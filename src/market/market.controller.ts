@@ -1,12 +1,16 @@
 import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CandleDto, MarketService } from "./market.service";
+import { IndicatorResult, IndicatorsService } from "./indicators/indicators.service";
 import { ImportCandlesDto } from "./dto/import-candles.dto";
 
 @ApiTags("market")
 @Controller("market")
 export class MarketController {
-  constructor(private readonly market: MarketService) {}
+  constructor(
+    private readonly market: MarketService,
+    private readonly indicators: IndicatorsService,
+  ) {}
 
   // Trigger an import from the public data source (admin/scheduled in prod).
   @Post("import")
@@ -33,5 +37,22 @@ export class MarketController {
     @Query("timeframe") timeframe: string,
   ): Promise<CandleDto | null> {
     return this.market.getLatest(symbol, timeframe);
+  }
+
+  @Get("indicators")
+  getIndicators(
+    @Query("symbol") symbol: string,
+    @Query("timeframe") timeframe: string,
+    @Query("indicator") indicator: string,
+    @Query("period") period?: string,
+    @Query("limit") limit?: string,
+  ): Promise<IndicatorResult> {
+    return this.indicators.compute(
+      symbol,
+      timeframe,
+      indicator,
+      period ? Number(period) : undefined,
+      limit ? Number(limit) : 300,
+    );
   }
 }
