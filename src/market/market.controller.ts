@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CandleDto, MarketService } from "./market.service";
 import { IndicatorResult, IndicatorsService } from "./indicators/indicators.service";
+import { AnalysisResult, AnalysisService } from "./analysis/analysis.service";
 import { ImportCandlesDto } from "./dto/import-candles.dto";
 
 @ApiTags("market")
@@ -10,6 +11,7 @@ export class MarketController {
   constructor(
     private readonly market: MarketService,
     private readonly indicators: IndicatorsService,
+    private readonly analysis: AnalysisService,
   ) {}
 
   // Trigger an import from the public data source (admin/scheduled in prod).
@@ -54,5 +56,14 @@ export class MarketController {
       period ? Number(period) : undefined,
       limit ? Number(limit) : 300,
     );
+  }
+
+  @Get("analysis")
+  getAnalysis(
+    @Query("symbol") symbol: string,
+    @Query("timeframe") timeframe: string,
+    @Query("limit") limit?: string,
+  ): Promise<AnalysisResult> {
+    return this.analysis.analyze(symbol, timeframe, limit ? Number(limit) : 300);
   }
 }

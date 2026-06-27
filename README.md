@@ -22,6 +22,7 @@ Part of the PredictMind platform (microservices architecture). Product and archi
 | GET | `/api/v1/market/candles?symbol=&timeframe=&limit=` | Read stored candles |
 | GET | `/api/v1/market/latest?symbol=&timeframe=` | Most recent candle |
 | GET | `/api/v1/market/indicators?symbol=&timeframe=&indicator=&period=&limit=` | Compute RSI/MACD/EMA/SMA/ATR/VWAP |
+| GET | `/api/v1/market/analysis?symbol=&timeframe=` | Trend, volatility, support/resistance, regime |
 | GET | `/api/v1/health` | Health check |
 
 Timeframes: `1m, 5m, 15m, 1h, 4h, 1d, 1w`.
