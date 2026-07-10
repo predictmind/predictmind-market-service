@@ -3,6 +3,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { CandleDto, MarketService } from "./market.service";
 import { IndicatorResult, IndicatorsService } from "./indicators/indicators.service";
 import { AnalysisResult, AnalysisService } from "./analysis/analysis.service";
+import { SyncService, SyncSummary } from "./sync.service";
 import { ImportCandlesDto } from "./dto/import-candles.dto";
 
 @ApiTags("market")
@@ -12,7 +13,15 @@ export class MarketController {
     private readonly market: MarketService,
     private readonly indicators: IndicatorsService,
     private readonly analysis: AnalysisService,
+    private readonly sync: SyncService,
   ) {}
+
+  // Manually trigger a sync of the latest candles for all active coins
+  // (the same job runs automatically on a schedule). Admin/ops in production.
+  @Post("sync")
+  runSync(): Promise<SyncSummary> {
+    return this.sync.syncOnce();
+  }
 
   // Trigger an import from the public data source (admin/scheduled in prod).
   @Post("import")

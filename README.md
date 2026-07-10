@@ -19,6 +19,7 @@ Part of the PredictMind platform (microservices architecture). Product and archi
 | GET | `/api/v1/coins/:symbol` | Coin details (case-insensitive) |
 | POST | `/api/v1/coins` | Add a coin (admin — RBAC TODO) |
 | POST | `/api/v1/market/import` | Import candles from Binance (`{ symbol, timeframe, limit }`) |
+| POST | `/api/v1/market/sync` | Manually trigger one candle-sync run for all coins (also runs every 5 min when `SYNC_ENABLED=true`) |
 | GET | `/api/v1/market/candles?symbol=&timeframe=&limit=` | Read stored candles |
 | GET | `/api/v1/market/latest?symbol=&timeframe=` | Most recent candle |
 | GET | `/api/v1/market/indicators?symbol=&timeframe=&indicator=&period=&limit=` | Compute RSI/MACD/EMA/SMA/ATR/VWAP |
@@ -37,6 +38,21 @@ npm run start:dev
 ```
 
 Interactive API docs (Swagger UI): `http://localhost:3003/api/docs`. The standard coin set is seeded automatically on startup.
+
+### Scheduled sync
+
+- `SYNC_ENABLED` — when `true`, a cron job refreshes the latest candles for every coin every 5 minutes.
+- `SYNC_TIMEFRAMES` — comma-separated timeframes to keep fresh (e.g. `1h,4h`).
+
+### Run with Docker (recommended)
+
+The whole stack (this service + Postgres + siblings) runs via the compose file in [`predictmind-infra`](https://github.com/predictmind/predictmind-infra):
+
+```bash
+docker compose up --build postgres market   # just this service + its DB
+```
+
+Inside the compose network, services reach the database at host `postgres` (not `localhost`). On a fresh database, apply the schema before the first start (`prisma migrate deploy` / `prisma db push`) — the startup coin-seed assumes the tables exist.
 
 ## Quality & security
 
