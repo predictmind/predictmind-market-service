@@ -14,6 +14,7 @@ Read in order:
 | 4 | [04-indicators.md](04-indicators.md) | The indicator engine: RSI/MACD/EMA/SMA/ATR/VWAP from candles |
 | 5 | [05-market-analysis.md](05-market-analysis.md) | Trend, support/resistance, volatility & market regime |
 | 6 | [06-realtime-sync.md](06-realtime-sync.md) | Auto-refreshing candles on a timer + running the service in Docker |
+| 7 | [07-glossary.md](07-glossary.md) | Dictionary of every market-specific term |
 
 > New to "server", "API", "database", "Prisma", "DTO"? The auth service's notes
 > (`predictmind-auth-service/education/`) teach those from scratch. This folder
