@@ -55,6 +55,8 @@ the **market-specific** words.
 | **Signal-only** | Data we use to decide, but never trade directly (we trade spot). |
 | **Open interest (OI)** | Total size of open futures positions — how much money is in a move. |
 | **Rising / falling OI** | New money entering (conviction) / positions closing. |
+| **Long/short ratio** | Share of futures accounts long vs short — a contrarian crowd gauge. |
+| **Liquidation** | Forced closing of a leveraged position; historical data isn't freely available (deferred). |
 
 With these words plus lessons 01–07, you can re-read any line of this service and
 know what it does and why. 🎓

@@ -99,3 +99,40 @@ export async function fetchBinanceOpenInterest(
     timestamp: new Date(Number(r.timestamp)),
   }));
 }
+
+export interface RawLongShort {
+  longShortRatio: string;
+  longAccount: string;
+  shortAccount: string;
+  timestamp: Date;
+}
+
+/**
+ * Fetch the global long/short account ratio from Binance USD-M Futures.
+ * Docs: https://fapi.binance.com/futures/data/globalLongShortAccountRatio
+ * `period` must be a supported interval; only ~30 days of history are available.
+ */
+export async function fetchBinanceLongShort(
+  futuresBaseUrl: string,
+  pair: string,
+  period: string,
+  limit: number,
+): Promise<RawLongShort[]> {
+  const url = `${futuresBaseUrl}/futures/data/globalLongShortAccountRatio?symbol=${pair}&period=${period}&limit=${limit}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Binance long/short request failed (${response.status})`);
+  }
+  const rows = (await response.json()) as {
+    longShortRatio: string;
+    longAccount: string;
+    shortAccount: string;
+    timestamp: number;
+  }[];
+  return rows.map((r) => ({
+    longShortRatio: String(r.longShortRatio),
+    longAccount: String(r.longAccount),
+    shortAccount: String(r.shortAccount),
+    timestamp: new Date(Number(r.timestamp)),
+  }));
+}

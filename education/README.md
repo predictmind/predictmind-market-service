@@ -14,7 +14,7 @@ Read in order:
 | 4 | [04-indicators.md](04-indicators.md) | The indicator engine: RSI/MACD/EMA/SMA/ATR/VWAP from candles |
 | 5 | [05-market-analysis.md](05-market-analysis.md) | Trend, support/resistance, volatility & market regime |
 | 6 | [06-realtime-sync.md](06-realtime-sync.md) | Auto-refreshing candles on a timer + running the service in Docker |
-| 7 | [07-order-flow.md](07-order-flow.md) | Extra precision signals: order-flow (#1), funding (#2), open interest (#3), … |
+| 7 | [07-order-flow.md](07-order-flow.md) | Extra precision signals: order-flow (#1), funding (#2), open interest (#3), long/short ratio (#4), … |
 | 8 | [08-glossary.md](08-glossary.md) | Dictionary of every market-specific term |
 
 > New to "server", "API", "database", "Prisma", "DTO"? The auth service's notes

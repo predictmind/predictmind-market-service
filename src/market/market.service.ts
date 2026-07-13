@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import {
   fetchBinanceFunding,
   fetchBinanceKlines,
+  fetchBinanceLongShort,
   fetchBinanceOpenInterest,
 } from "./binance.client";
 
@@ -201,5 +202,55 @@ export class MarketService {
       select: { openInterest: true, timestamp: true },
     });
     return rows.map((r) => ({ openInterest: r.openInterest.toString(), timestamp: r.timestamp }));
+  }
+
+  /** Import global long/short account ratio for a coin/timeframe from Binance. */
+  async importLongShort(
+    symbol: string,
+    timeframe: string,
+    limit = 500,
+  ): Promise<{ imported: number }> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const futuresBaseUrl =
+      this.config.get<string>("BINANCE_FUTURES_API_URL") ?? "https://fapi.binance.com";
+    const pair = `${coin.symbol}USDT`;
+    const raw = await fetchBinanceLongShort(
+      futuresBaseUrl,
+      pair,
+      timeframe,
+      Math.min(Math.max(limit, 1), 500),
+    );
+
+    const result = await this.prisma.longShortRatio.createMany({
+      data: raw.map((r) => ({
+        coinSymbol: coin.symbol,
+        timeframe,
+        longShortRatio: r.longShortRatio,
+        longAccount: r.longAccount,
+        shortAccount: r.shortAccount,
+        timestamp: r.timestamp,
+      })),
+      skipDuplicates: true,
+    });
+    return { imported: result.count };
+  }
+
+  /** Read stored long/short ratios (oldest first, so consumers can align). */
+  async getLongShort(
+    symbol: string,
+    timeframe: string,
+    limit = 500,
+  ): Promise<{ longShortRatio: string; timestamp: Date }[]> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const rows = await this.prisma.longShortRatio.findMany({
+      where: { coinSymbol: coin.symbol, timeframe },
+      orderBy: { timestamp: "asc" },
+      take: Math.min(Math.max(limit, 1), 2000),
+      select: { longShortRatio: true, timestamp: true },
+    });
+    return rows.map((r) => ({
+      longShortRatio: r.longShortRatio.toString(),
+      timestamp: r.timestamp,
+    }));
   }
 }

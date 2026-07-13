@@ -194,4 +194,44 @@ Rising OI is more meaningful than the raw level, so we compare the *change*.
   rate** in-sample — promising, though it still must prove itself **out-of-sample**
   before we trust it (that's the methodology rule).
 
+## Signal #4 — Long/short ratio: what the crowd is betting 👥
+
+The **long/short ratio** is the share of futures **accounts** positioned long vs
+short. Ratio 2.0 means twice as many accounts are long as short. It's mainly a
+**contrarian** gauge: when *everyone* is long, there's little new buying left and a
+pullback often follows ("the crowd is usually wrong at extremes").
+
+Signal only — we trade spot.
+
+### Source & storage
+
+Binance's `/futures/data/globalLongShortAccountRatio` (needs a `period`, ~30 days
+history). We added `fetchBinanceLongShort`, a `long_short_ratios` table (per
+symbol + timeframe), and endpoints `POST /market/lsr/import` and
+`GET /market/lsr?symbol=&timeframe=&limit=`.
+
+### Use
+
+Aligned to candles (same `attachSeries` helper), with a `long_short_ratio` rule
+condition comparing the ratio to a threshold:
+
+```jsonc
+{ "type": "long_short_ratio", "op": "gt", "value": 2 }   // crowd very long -> caution
+```
+
+### A note on liquidations 🪧
+
+The roadmap paired this with **liquidations**, but Binance's *historical*
+liquidation REST endpoint is restricted — liquidation data is only available
+**live** (websocket) or from paid providers. So we implemented the reliably-free
+long/short ratio now and **deferred** liquidation capture (it would need a live
+feed). Being honest about data availability beats faking a feed.
+
+### Verified ✅
+
+- Live: imported 180 BTC 4h ratios (real ≈ 1.5), and a long/short-ratio backtest
+  ran with the ratio correctly aligned to candles. (This particular threshold
+  underperformed buy&hold in-sample — which is exactly what optimization and
+  out-of-sample testing are for; the *signal* is now available to use.)
+
 Next: the [glossary](08-glossary.md).

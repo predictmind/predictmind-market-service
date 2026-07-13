@@ -83,6 +83,23 @@ export class MarketController {
     return this.market.getOpenInterest(symbol, timeframe, limit ? Number(limit) : 500);
   }
 
+  // Import global long/short account ratio from Binance futures.
+  @Post("lsr/import")
+  importLongShort(
+    @Body() dto: { symbol: string; timeframe: string; limit?: number },
+  ): Promise<{ imported: number }> {
+    return this.market.importLongShort(dto.symbol, dto.timeframe, dto.limit ?? 500);
+  }
+
+  @Get("lsr")
+  longShort(
+    @Query("symbol") symbol: string,
+    @Query("timeframe") timeframe: string,
+    @Query("limit") limit?: string,
+  ): Promise<{ longShortRatio: string; timestamp: Date }[]> {
+    return this.market.getLongShort(symbol, timeframe, limit ? Number(limit) : 500);
+  }
+
   @Get("indicators")
   getIndicators(
     @Query("symbol") symbol: string,
