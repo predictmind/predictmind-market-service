@@ -275,4 +275,15 @@ every candle of that day), via a `fear_greed` rule condition:
   "Neutral"), and a Fear & Greed backtest on BTC 4h ran with the daily index
   correctly aligned to candles.
 
+## Signal #6 — BTC context (no new market data!) 🟠
+
+Alts tend to **follow BTC**, so knowing whether BTC is healthy is a powerful filter
+for alt trades. The nice part: this needs **no new capture in the market service** —
+we already store BTC candles. The **backtest service** simply fetches BTC candles
+alongside the alt's candles and computes a BTC-trend filter (BTC above/below its own
+moving average). See the backtest service's rule-engine lesson for the details.
+
+So signal #6 lives entirely on the backtest side; the market service already
+provides everything it needs (the `/market/candles` endpoint for BTC).
+
 Next: the [glossary](08-glossary.md).
