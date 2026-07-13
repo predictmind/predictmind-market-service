@@ -153,4 +153,45 @@ If a candle has no funding yet, the condition is simply `false` (safe).
 - Live: imported 500 BTC funding points (real rates ≈ 0.006%), and a funding-based
   rule backtest on BTC 4h ran with funding correctly aligned to candles.
 
+## Signal #3 — Open interest: conviction behind a move 📊
+
+**Open interest (OI)** is the total size of all open futures positions. It answers
+"how much money is *in* this move?":
+
+- **Rising OI + rising price** → new money entering → **conviction** (strong move).
+- **Rising OI + falling price** → new shorts piling in.
+- **Falling OI** → positions closing → a move may be running out of steam.
+
+Like funding, it's a **signal only** — we trade spot, not the futures.
+
+### Where it comes from & how we store it
+
+Binance's futures **open-interest history** endpoint
+(`/futures/data/openInterestHist`) needs a **`period`** (matching a candle
+timeframe like `4h`) and only keeps ~**30 days** of history. We added
+`fetchBinanceOpenInterest`, an `open_interest` table (keyed by
+**symbol + timeframe + timestamp**), and endpoints `POST /market/oi/import` and
+`GET /market/oi?symbol=&timeframe=&limit=`.
+
+Because OI history is per-timeframe, we store the `timeframe` on each row — unlike
+funding, which is one series per symbol.
+
+### How it's used
+
+The backtest aligns OI to candles (same two-pointer trick as funding) and offers an
+**`oi_change`** rule condition — the **percent change** of OI over a lookback:
+
+```jsonc
+{ "type": "oi_change", "period": 1, "op": "gt", "value": 2 }   // OI up >2% = conviction
+```
+
+Rising OI is more meaningful than the raw level, so we compare the *change*.
+
+### Verified ✅
+
+- Live: imported 180 BTC 4h OI points (~30 days; real values ≈ 98–100k). An
+  OI-conviction backtest on BTC 4h did **+6.1% vs buy&hold −2.0% with a 77% win
+  rate** in-sample — promising, though it still must prove itself **out-of-sample**
+  before we trust it (that's the methodology rule).
+
 Next: the [glossary](08-glossary.md).

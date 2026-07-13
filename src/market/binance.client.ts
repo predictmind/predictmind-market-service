@@ -70,3 +70,32 @@ export async function fetchBinanceFunding(
     fundingTime: new Date(Number(r.fundingTime)),
   }));
 }
+
+export interface RawOpenInterest {
+  openInterest: string;
+  timestamp: Date;
+}
+
+/**
+ * Fetch open-interest history from Binance USD-M Futures (no API key needed).
+ * Docs: https://fapi.binance.com/futures/data/openInterestHist
+ * `period` must be a supported interval (5m,15m,30m,1h,2h,4h,6h,12h,1d).
+ * Only ~30 days of history are available.
+ */
+export async function fetchBinanceOpenInterest(
+  futuresBaseUrl: string,
+  pair: string,
+  period: string,
+  limit: number,
+): Promise<RawOpenInterest[]> {
+  const url = `${futuresBaseUrl}/futures/data/openInterestHist?symbol=${pair}&period=${period}&limit=${limit}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Binance open-interest request failed (${response.status})`);
+  }
+  const rows = (await response.json()) as { sumOpenInterest: string; timestamp: number }[];
+  return rows.map((r) => ({
+    openInterest: String(r.sumOpenInterest),
+    timestamp: new Date(Number(r.timestamp)),
+  }));
+}

@@ -66,6 +66,23 @@ export class MarketController {
     return this.market.getFunding(symbol, limit ? Number(limit) : 500);
   }
 
+  // Import open-interest history from Binance futures (admin/scheduled in prod).
+  @Post("oi/import")
+  importOpenInterest(
+    @Body() dto: { symbol: string; timeframe: string; limit?: number },
+  ): Promise<{ imported: number }> {
+    return this.market.importOpenInterest(dto.symbol, dto.timeframe, dto.limit ?? 500);
+  }
+
+  @Get("oi")
+  openInterest(
+    @Query("symbol") symbol: string,
+    @Query("timeframe") timeframe: string,
+    @Query("limit") limit?: string,
+  ): Promise<{ openInterest: string; timestamp: Date }[]> {
+    return this.market.getOpenInterest(symbol, timeframe, limit ? Number(limit) : 500);
+  }
+
   @Get("indicators")
   getIndicators(
     @Query("symbol") symbol: string,

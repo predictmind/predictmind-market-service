@@ -2,7 +2,11 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CoinsService } from "../coins/coins.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { fetchBinanceFunding, fetchBinanceKlines } from "./binance.client";
+import {
+  fetchBinanceFunding,
+  fetchBinanceKlines,
+  fetchBinanceOpenInterest,
+} from "./binance.client";
 
 export const SUPPORTED_TIMEFRAMES = [
   "1m",
@@ -152,5 +156,50 @@ export class MarketService {
       select: { fundingRate: true, fundingTime: true },
     });
     return rows.map((r) => ({ fundingRate: r.fundingRate.toString(), fundingTime: r.fundingTime }));
+  }
+
+  /** Import open-interest history for a coin/timeframe from Binance futures. */
+  async importOpenInterest(
+    symbol: string,
+    timeframe: string,
+    limit = 500,
+  ): Promise<{ imported: number }> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const futuresBaseUrl =
+      this.config.get<string>("BINANCE_FUTURES_API_URL") ?? "https://fapi.binance.com";
+    const pair = `${coin.symbol}USDT`;
+    const raw = await fetchBinanceOpenInterest(
+      futuresBaseUrl,
+      pair,
+      timeframe,
+      Math.min(Math.max(limit, 1), 500),
+    );
+
+    const result = await this.prisma.openInterest.createMany({
+      data: raw.map((o) => ({
+        coinSymbol: coin.symbol,
+        timeframe,
+        openInterest: o.openInterest,
+        timestamp: o.timestamp,
+      })),
+      skipDuplicates: true,
+    });
+    return { imported: result.count };
+  }
+
+  /** Read stored open interest (oldest first, so consumers can align to candles). */
+  async getOpenInterest(
+    symbol: string,
+    timeframe: string,
+    limit = 500,
+  ): Promise<{ openInterest: string; timestamp: Date }[]> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const rows = await this.prisma.openInterest.findMany({
+      where: { coinSymbol: coin.symbol, timeframe },
+      orderBy: { timestamp: "asc" },
+      take: Math.min(Math.max(limit, 1), 2000),
+      select: { openInterest: true, timestamp: true },
+    });
+    return rows.map((r) => ({ openInterest: r.openInterest.toString(), timestamp: r.timestamp }));
   }
 }

@@ -65,3 +65,20 @@ model FundingRate {
   @@index([coinSymbol, fundingTime])
   @@map("funding_rates")
 }
+
+// Perpetual-futures open interest history (precision signal #3): the total size
+// of open positions. Rising OI + rising price = conviction/new money; falling OI
+// = positions closing. Stored per symbol + timeframe (Binance "period"). Signal
+// only — PredictMind trades spot.
+model OpenInterest {
+  id           String   @id @default(uuid()) @db.Uuid
+  coinSymbol   String
+  timeframe    String
+  openInterest Decimal  @db.Decimal(30, 8)
+  timestamp    DateTime
+  createdAt    DateTime @default(now())
+
+  @@unique([coinSymbol, timeframe, timestamp])
+  @@index([coinSymbol, timeframe, timestamp])
+  @@map("open_interest")
+}

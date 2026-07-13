@@ -53,6 +53,8 @@ the **market-specific** words.
 | **Funding rate** | Periodic payment between longs/shorts; a crowd-positioning gauge. |
 | **Positive / negative funding** | Crowd heavily long / heavily short. |
 | **Signal-only** | Data we use to decide, but never trade directly (we trade spot). |
+| **Open interest (OI)** | Total size of open futures positions — how much money is in a move. |
+| **Rising / falling OI** | New money entering (conviction) / positions closing. |
 
 With these words plus lessons 01–07, you can re-read any line of this service and
 know what it does and why. 🎓
