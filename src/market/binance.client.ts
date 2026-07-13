@@ -136,3 +136,34 @@ export async function fetchBinanceLongShort(
     timestamp: new Date(Number(r.timestamp)),
   }));
 }
+
+export interface RawFearGreed {
+  value: number;
+  classification: string;
+  timestamp: Date;
+}
+
+/**
+ * Fetch the Crypto Fear & Greed Index from alternative.me (free, no key).
+ * Docs: https://api.alternative.me/fng/?limit=500
+ * A market-wide daily value 0-100. `timestamp` arrives as unix *seconds*.
+ * (Kept in this file with the other market-data clients for convenience.)
+ */
+export async function fetchFearGreed(
+  baseUrl: string,
+  limit: number,
+): Promise<RawFearGreed[]> {
+  const url = `${baseUrl}/fng/?limit=${limit}&format=json`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Fear & Greed request failed (${response.status})`);
+  }
+  const body = (await response.json()) as {
+    data: { value: string; value_classification: string; timestamp: string }[];
+  };
+  return (body.data ?? []).map((d) => ({
+    value: Number(d.value),
+    classification: String(d.value_classification),
+    timestamp: new Date(Number(d.timestamp) * 1000),
+  }));
+}

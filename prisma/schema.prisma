@@ -101,3 +101,18 @@ model LongShortRatio {
   @@index([coinSymbol, timeframe, timestamp])
   @@map("long_short_ratios")
 }
+
+// Crypto Fear & Greed Index (precision signal #5): a single market-wide daily
+// number 0-100 (0 = extreme fear, 100 = extreme greed). Contrarian: extreme fear
+// often near bottoms, extreme greed near tops. Not per-coin — one series for the
+// whole market. Source: alternative.me (free, no key).
+model FearGreed {
+  id             String   @id @default(uuid()) @db.Uuid
+  value          Int
+  classification String
+  timestamp      DateTime @unique
+  createdAt      DateTime @default(now())
+
+  @@index([timestamp])
+  @@map("fear_greed")
+}

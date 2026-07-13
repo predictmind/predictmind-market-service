@@ -100,6 +100,19 @@ export class MarketController {
     return this.market.getLongShort(symbol, timeframe, limit ? Number(limit) : 500);
   }
 
+  // Import the market-wide Crypto Fear & Greed Index (alternative.me).
+  @Post("fng/import")
+  importFearGreed(@Body() dto: { limit?: number }): Promise<{ imported: number }> {
+    return this.market.importFearGreed(dto.limit ?? 500);
+  }
+
+  @Get("fng")
+  fearGreed(
+    @Query("limit") limit?: string,
+  ): Promise<{ value: number; classification: string; timestamp: Date }[]> {
+    return this.market.getFearGreed(limit ? Number(limit) : 500);
+  }
+
   @Get("indicators")
   getIndicators(
     @Query("symbol") symbol: string,

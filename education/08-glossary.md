@@ -57,6 +57,8 @@ the **market-specific** words.
 | **Rising / falling OI** | New money entering (conviction) / positions closing. |
 | **Long/short ratio** | Share of futures accounts long vs short — a contrarian crowd gauge. |
 | **Liquidation** | Forced closing of a leveraged position; historical data isn't freely available (deferred). |
+| **Fear & Greed Index** | Market-wide daily sentiment 0-100 (0 fear, 100 greed); contrarian. |
+| **alternative.me** | Free public API providing the Fear & Greed Index (no key). |
 
 With these words plus lessons 01–07, you can re-read any line of this service and
 know what it does and why. 🎓

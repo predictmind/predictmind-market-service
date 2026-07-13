@@ -234,4 +234,45 @@ feed). Being honest about data availability beats faking a feed.
   underperformed buy&hold in-sample — which is exactly what optimization and
   out-of-sample testing are for; the *signal* is now available to use.)
 
+## Signal #5 — Fear & Greed Index: the mood of the whole market 😱🤑
+
+The **Crypto Fear & Greed Index** is a single daily number **0–100** for the whole
+market: **0 = extreme fear**, **100 = extreme greed**. It's a **contrarian** tool —
+extreme fear often appears near bottoms (everyone's already sold), extreme greed
+near tops (everyone's already bought). "Be greedy when others are fearful."
+
+### What's different about this one
+
+Unlike the other signals, it's **not per-coin and not from Binance** — it's one
+market-wide series from a free public API, **alternative.me** (no key). And it's
+**daily**, not per-timeframe. So the table has **no `coinSymbol` or `timeframe`** —
+just a value, a label, and a date.
+
+```prisma
+model FearGreed {
+  value          Int       // 0-100
+  classification String    // "Fear", "Greed", ...
+  timestamp      DateTime  @unique
+}
+```
+
+- The API returns `timestamp` in unix **seconds**, so we multiply by 1000 to make a
+  real date (a classic off-by-1000 gotcha).
+- Endpoints: `POST /market/fng/import` and `GET /market/fng?limit=`.
+
+### Use
+
+Aligned to candles with the same `attachSeries` helper (a daily value applies to
+every candle of that day), via a `fear_greed` rule condition:
+
+```jsonc
+{ "type": "fear_greed", "op": "lt", "value": 25 }   // extreme fear -> contrarian buy
+```
+
+### Verified ✅
+
+- Live: imported **1000 daily** values (real history back to 2023, e.g. 52
+  "Neutral"), and a Fear & Greed backtest on BTC 4h ran with the daily index
+  correctly aligned to candles.
+
 Next: the [glossary](08-glossary.md).

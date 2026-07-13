@@ -7,6 +7,7 @@ import {
   fetchBinanceKlines,
   fetchBinanceLongShort,
   fetchBinanceOpenInterest,
+  fetchFearGreed,
 } from "./binance.client";
 
 export const SUPPORTED_TIMEFRAMES = [
@@ -252,5 +253,34 @@ export class MarketService {
       longShortRatio: r.longShortRatio.toString(),
       timestamp: r.timestamp,
     }));
+  }
+
+  /** Import the market-wide Crypto Fear & Greed Index from alternative.me. */
+  async importFearGreed(limit = 500): Promise<{ imported: number }> {
+    const baseUrl =
+      this.config.get<string>("FEAR_GREED_API_URL") ?? "https://api.alternative.me";
+    const raw = await fetchFearGreed(baseUrl, Math.min(Math.max(limit, 1), 2000));
+
+    const result = await this.prisma.fearGreed.createMany({
+      data: raw.map((f) => ({
+        value: f.value,
+        classification: f.classification,
+        timestamp: f.timestamp,
+      })),
+      skipDuplicates: true,
+    });
+    return { imported: result.count };
+  }
+
+  /** Read stored Fear & Greed values (oldest first, so consumers can align). */
+  async getFearGreed(
+    limit = 500,
+  ): Promise<{ value: number; classification: string; timestamp: Date }[]> {
+    const rows = await this.prisma.fearGreed.findMany({
+      orderBy: { timestamp: "asc" },
+      take: Math.min(Math.max(limit, 1), 3000),
+      select: { value: true, classification: true, timestamp: true },
+    });
+    return rows;
   }
 }
