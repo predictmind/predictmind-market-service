@@ -1,4 +1,4 @@
-# 7. Glossary (the dictionary)
+# 8. Glossary (the dictionary)
 
 Quick, simple meanings for the words used in **this** service's notes. General
 coding words (API, server, database, Prisma, DTO, module, decorator, async/await,
@@ -44,8 +44,13 @@ the **market-specific** words.
 | **Hypertable** | TimescaleDB's fast, auto-partitioned table for time-series rows. |
 | **Health check** | A tiny endpoint (`/health`) that answers "I'm alive" so systems can watch the service. |
 | **Non-root user** | A limited user inside the container; safer than the all-powerful `root`. |
+| **Order-flow** | Aggressive buying vs selling within a candle. |
+| **Taker / Maker** | Someone who takes the price now (aggressive) / posts and waits. |
+| **Taker buy volume** | Volume from aggressive market buys (Binance kline field 9). |
+| **Buy ratio** | takerBuyVolume ÷ volume (>0.5 = net buying pressure). |
+| **Nullable column** | A database column allowed to be empty — lets us add fields without breaking old rows. |
 
-With these words plus lessons 01–06, you can re-read any line of this service and
+With these words plus lessons 01–07, you can re-read any line of this service and
 know what it does and why. 🎓
 
 Back to the [index](README.md).

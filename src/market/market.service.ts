@@ -21,6 +21,8 @@ export interface CandleDto {
   low: string;
   close: string;
   volume: string;
+  takerBuyVolume: string | null;
+  trades: number | null;
 }
 
 @Injectable()
@@ -63,6 +65,8 @@ export class MarketService {
         low: c.low,
         close: c.close,
         volume: c.volume,
+        takerBuyVolume: c.takerBuyVolume,
+        trades: c.trades,
       })),
       skipDuplicates: true,
     });
@@ -90,6 +94,8 @@ export class MarketService {
         low: true,
         close: true,
         volume: true,
+        takerBuyVolume: true,
+        trades: true,
       },
     });
 
@@ -101,6 +107,8 @@ export class MarketService {
       low: r.low.toString(),
       close: r.close.toString(),
       volume: r.volume.toString(),
+      takerBuyVolume: r.takerBuyVolume ? r.takerBuyVolume.toString() : null,
+      trades: r.trades ?? null,
     }));
   }
 

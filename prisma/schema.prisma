@@ -40,6 +40,10 @@ model MarketCandle {
   low       Decimal  @db.Decimal(20, 8)
   close     Decimal  @db.Decimal(20, 8)
   volume    Decimal  @db.Decimal(30, 8)
+  // Order-flow signal: volume bought by aggressive takers + trade count.
+  // Nullable so candles imported before this feature stay valid.
+  takerBuyVolume Decimal? @db.Decimal(30, 8)
+  trades         Int?
 
   @@unique([coinId, timeframe, openTime])
   @@index([coinId, timeframe, openTime])
