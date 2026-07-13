@@ -49,6 +49,10 @@ the **market-specific** words.
 | **Taker buy volume** | Volume from aggressive market buys (Binance kline field 9). |
 | **Buy ratio** | takerBuyVolume ÷ volume (>0.5 = net buying pressure). |
 | **Nullable column** | A database column allowed to be empty — lets us add fields without breaking old rows. |
+| **Perpetual futures** | A leveraged contract with no expiry; source of funding rate. |
+| **Funding rate** | Periodic payment between longs/shorts; a crowd-positioning gauge. |
+| **Positive / negative funding** | Crowd heavily long / heavily short. |
+| **Signal-only** | Data we use to decide, but never trade directly (we trade spot). |
 
 With these words plus lessons 01–07, you can re-read any line of this service and
 know what it does and why. 🎓

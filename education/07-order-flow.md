@@ -1,4 +1,10 @@
-# 7. Order-Flow: Capturing Who's Buying (signal #1)
+# 7. Extra Precision Signals (Order-Flow, Funding, …)
+
+This lesson grows as we add "extra signals" from the precision roadmap
+(docs 07 §16.6), **one at a time, in importance order**. Each is added as its own
+section below so you can follow the journey.
+
+## Signal #1 — Order-Flow: Capturing Who's Buying
 
 ## Why this step exists
 
@@ -86,5 +92,65 @@ aggressive buyers are in control." See the backtest service's rule-engine lesson
 - Live: imported BTC 4h and a candle came back with
   `takerBuyVolume: 320.49` out of `volume: 665.42` (≈48% buy pressure) and
   `trades: 37376`. Real order-flow data, captured for free.
+
+## Signal #2 — Funding rate: what the leveraged crowd is doing 💸
+
+**Funding rate** comes from **perpetual futures** (a kind of leveraged contract).
+Every ~8 hours, one side pays the other to keep the contract's price near the real
+price:
+
+- **Positive funding** → longs pay shorts → the crowd is **heavily long** (often
+  over-optimistic; can precede a pullback).
+- **Negative funding** → shorts pay longs → the crowd is **heavily short**.
+
+So funding is a **crowd-positioning / sentiment gauge**. It's one of the most
+watched signals in crypto.
+
+> **Important:** we trade **spot only**. We use funding purely as a **signal** to
+> inform spot buys/sells — we never trade the leveraged contract itself.
+
+### Where it comes from
+
+Funding lives on Binance's **futures** API (`fapi.binance.com`), separate from the
+spot klines. We added a tiny client (`fetchBinanceFunding`) and a config value
+`BINANCE_FUTURES_API_URL`.
+
+### How we store it
+
+A new table, `funding_rates`:
+
+```prisma
+model FundingRate {
+  id          String   @id @default(uuid()) @db.Uuid
+  coinSymbol  String
+  fundingRate Decimal  @db.Decimal(12, 8)
+  fundingTime DateTime
+  @@unique([coinSymbol, fundingTime])   // no duplicates on re-import
+}
+```
+
+- Keyed by **symbol + time** (funding is a market-wide series, not tied to one
+  candle). The `@@unique` makes re-imports **idempotent**.
+- Endpoints: `POST /market/funding/import` and `GET /market/funding?symbol=&limit=`
+  (returned oldest-first so consumers can line it up with candles).
+
+### The tricky bit: lining funding up with candles
+
+Funding updates every ~8 hours, but candles can be 1h or 4h. So which funding value
+applies to a given candle? **The most recent funding at or before the candle's
+time.** The backtest service does this with an efficient **two-pointer walk** over
+both time-sorted lists, attaching `fundingRate` to each candle. Then a rule can say:
+
+```jsonc
+{ "type": "funding", "op": "lt", "value": 0.00005 }   // "crowd not over-long"
+```
+
+If a candle has no funding yet, the condition is simply `false` (safe).
+
+### Verified ✅
+
+- Build + lint + 18 market tests / 29 backtest tests green.
+- Live: imported 500 BTC funding points (real rates ≈ 0.006%), and a funding-based
+  rule backtest on BTC 4h ran with funding correctly aligned to candles.
 
 Next: the [glossary](08-glossary.md).

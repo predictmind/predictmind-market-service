@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CoinsService } from "../coins/coins.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { fetchBinanceKlines } from "./binance.client";
+import { fetchBinanceFunding, fetchBinanceKlines } from "./binance.client";
 
 export const SUPPORTED_TIMEFRAMES = [
   "1m",
@@ -118,5 +118,39 @@ export class MarketService {
   ): Promise<CandleDto | null> {
     const [latest] = await this.getCandles(symbol, timeframe, 1);
     return latest ?? null;
+  }
+
+  /** Import funding-rate history for a coin from Binance futures. */
+  async importFunding(symbol: string, limit = 500): Promise<{ imported: number }> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const futuresBaseUrl =
+      this.config.get<string>("BINANCE_FUTURES_API_URL") ?? "https://fapi.binance.com";
+    const pair = `${coin.symbol}USDT`;
+    const raw = await fetchBinanceFunding(futuresBaseUrl, pair, Math.min(Math.max(limit, 1), 1000));
+
+    const result = await this.prisma.fundingRate.createMany({
+      data: raw.map((f) => ({
+        coinSymbol: coin.symbol,
+        fundingRate: f.fundingRate,
+        fundingTime: f.fundingTime,
+      })),
+      skipDuplicates: true,
+    });
+    return { imported: result.count };
+  }
+
+  /** Read stored funding rates (oldest first, so consumers can align to candles). */
+  async getFunding(
+    symbol: string,
+    limit = 500,
+  ): Promise<{ fundingRate: string; fundingTime: Date }[]> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const rows = await this.prisma.fundingRate.findMany({
+      where: { coinSymbol: coin.symbol },
+      orderBy: { fundingTime: "asc" },
+      take: Math.min(Math.max(limit, 1), 2000),
+      select: { fundingRate: true, fundingTime: true },
+    });
+    return rows.map((r) => ({ fundingRate: r.fundingRate.toString(), fundingTime: r.fundingTime }));
   }
 }

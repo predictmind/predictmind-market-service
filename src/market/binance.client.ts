@@ -43,3 +43,30 @@ export async function fetchBinanceKlines(
     takerBuyVolume: String(row[9]),
   }));
 }
+
+export interface RawFunding {
+  fundingRate: string;
+  fundingTime: Date;
+}
+
+/**
+ * Fetch funding-rate history from Binance USD-M Futures (no API key needed).
+ * Docs: https://fapi.binance.com/fapi/v1/fundingRate
+ * Note this uses the *futures* base URL, separate from spot klines.
+ */
+export async function fetchBinanceFunding(
+  futuresBaseUrl: string,
+  pair: string,
+  limit: number,
+): Promise<RawFunding[]> {
+  const url = `${futuresBaseUrl}/fapi/v1/fundingRate?symbol=${pair}&limit=${limit}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Binance funding request failed (${response.status})`);
+  }
+  const rows = (await response.json()) as { fundingRate: string; fundingTime: number }[];
+  return rows.map((r) => ({
+    fundingRate: String(r.fundingRate),
+    fundingTime: new Date(Number(r.fundingTime)),
+  }));
+}

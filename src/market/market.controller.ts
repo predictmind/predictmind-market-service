@@ -50,6 +50,22 @@ export class MarketController {
     return this.market.getLatest(symbol, timeframe);
   }
 
+  // Import funding-rate history from Binance futures (admin/scheduled in prod).
+  @Post("funding/import")
+  importFunding(
+    @Body() dto: { symbol: string; limit?: number },
+  ): Promise<{ imported: number }> {
+    return this.market.importFunding(dto.symbol, dto.limit ?? 500);
+  }
+
+  @Get("funding")
+  funding(
+    @Query("symbol") symbol: string,
+    @Query("limit") limit?: string,
+  ): Promise<{ fundingRate: string; fundingTime: Date }[]> {
+    return this.market.getFunding(symbol, limit ? Number(limit) : 500);
+  }
+
   @Get("indicators")
   getIndicators(
     @Query("symbol") symbol: string,
