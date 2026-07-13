@@ -167,3 +167,40 @@ export async function fetchFearGreed(
     timestamp: new Date(Number(d.timestamp) * 1000),
   }));
 }
+
+export interface RawOnChain {
+  activeAddresses: number | null;
+  mvrv: number | null;
+  timestamp: Date;
+}
+
+/**
+ * Fetch on-chain metrics from the Coin Metrics community API (free, no key).
+ * Docs: https://community-api.coinmetrics.io/v4/timeseries/asset-metrics
+ * `asset` is a lowercase code (btc, eth).
+ *
+ * We request only **AdrActCnt** (active addresses), which is on the free
+ * community tier. MVRV needs realized cap (`CapRealUSD`), which the free tier
+ * blocks (403), so `mvrv` stays null unless a paid source is configured later —
+ * the field is kept future-ready.
+ */
+export async function fetchCoinMetrics(
+  baseUrl: string,
+  asset: string,
+  limit: number,
+): Promise<RawOnChain[]> {
+  const metrics = "AdrActCnt";
+  const url = `${baseUrl}/v4/timeseries/asset-metrics?assets=${asset}&metrics=${metrics}&frequency=1d&page_size=${limit}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Coin Metrics request failed (${response.status})`);
+  }
+  const body = (await response.json()) as {
+    data?: { time: string; AdrActCnt?: string }[];
+  };
+  return (body.data ?? []).map((d) => ({
+    activeAddresses: d.AdrActCnt != null ? Math.round(Number(d.AdrActCnt)) : null,
+    mvrv: null,
+    timestamp: new Date(d.time),
+  }));
+}

@@ -113,6 +113,20 @@ export class MarketController {
     return this.market.getFearGreed(limit ? Number(limit) : 500);
   }
 
+  // Import on-chain metrics (active addresses, MVRV) from Coin Metrics.
+  @Post("onchain/import")
+  importOnChain(@Body() dto: { symbol: string; limit?: number }): Promise<{ imported: number }> {
+    return this.market.importOnChain(dto.symbol, dto.limit ?? 1000);
+  }
+
+  @Get("onchain")
+  onChain(
+    @Query("symbol") symbol: string,
+    @Query("limit") limit?: string,
+  ): Promise<{ activeAddresses: number | null; mvrv: string | null; timestamp: Date }[]> {
+    return this.market.getOnChain(symbol, limit ? Number(limit) : 1000);
+  }
+
   @Get("indicators")
   getIndicators(
     @Query("symbol") symbol: string,

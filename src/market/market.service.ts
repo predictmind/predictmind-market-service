@@ -7,6 +7,7 @@ import {
   fetchBinanceKlines,
   fetchBinanceLongShort,
   fetchBinanceOpenInterest,
+  fetchCoinMetrics,
   fetchFearGreed,
 } from "./binance.client";
 
@@ -282,5 +283,44 @@ export class MarketService {
       select: { value: true, classification: true, timestamp: true },
     });
     return rows;
+  }
+
+  /** Import on-chain metrics (active addresses, MVRV) from Coin Metrics. */
+  async importOnChain(symbol: string, limit = 1000): Promise<{ imported: number }> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const baseUrl =
+      this.config.get<string>("COINMETRICS_API_URL") ?? "https://community-api.coinmetrics.io";
+    const asset = coin.symbol.toLowerCase();
+    const raw = await fetchCoinMetrics(baseUrl, asset, Math.min(Math.max(limit, 1), 2000));
+
+    const result = await this.prisma.onChainMetric.createMany({
+      data: raw.map((m) => ({
+        coinSymbol: coin.symbol,
+        activeAddresses: m.activeAddresses,
+        mvrv: m.mvrv,
+        timestamp: m.timestamp,
+      })),
+      skipDuplicates: true,
+    });
+    return { imported: result.count };
+  }
+
+  /** Read stored on-chain metrics (oldest first, so consumers can align). */
+  async getOnChain(
+    symbol: string,
+    limit = 1000,
+  ): Promise<{ activeAddresses: number | null; mvrv: string | null; timestamp: Date }[]> {
+    const coin = await this.coins.findBySymbol(symbol);
+    const rows = await this.prisma.onChainMetric.findMany({
+      where: { coinSymbol: coin.symbol },
+      orderBy: { timestamp: "asc" },
+      take: Math.min(Math.max(limit, 1), 3000),
+      select: { activeAddresses: true, mvrv: true, timestamp: true },
+    });
+    return rows.map((r) => ({
+      activeAddresses: r.activeAddresses,
+      mvrv: r.mvrv ? r.mvrv.toString() : null,
+      timestamp: r.timestamp,
+    }));
   }
 }

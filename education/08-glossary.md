@@ -59,6 +59,10 @@ the **market-specific** words.
 | **Liquidation** | Forced closing of a leveraged position; historical data isn't freely available (deferred). |
 | **Fear & Greed Index** | Market-wide daily sentiment 0-100 (0 fear, 100 greed); contrarian. |
 | **alternative.me** | Free public API providing the Fear & Greed Index (no key). |
+| **On-chain** | Data from the blockchain itself (not exchanges). |
+| **Active addresses** | Daily count of active wallets — network usage/adoption. |
+| **MVRV** | Market cap ÷ realized cap; a valuation ratio (needs paid data — deferred). |
+| **Coin Metrics** | Free community API for on-chain metrics (active addresses). |
 
 With these words plus lessons 01–07, you can re-read any line of this service and
 know what it does and why. 🎓

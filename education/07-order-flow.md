@@ -286,4 +286,38 @@ moving average). See the backtest service's rule-engine lesson for the details.
 So signal #6 lives entirely on the backtest side; the market service already
 provides everything it needs (the `/market/candles` endpoint for BTC).
 
+## Signal #7 — On-chain: what's happening on the blockchain itself ⛓️
+
+Everything so far came from *exchanges*. But crypto also has **on-chain** data —
+what's happening on the actual blockchain. Two classics:
+
+- **Active addresses** — how many wallets were active that day (network usage /
+  adoption). Growing usage is a healthy sign.
+- **MVRV** — market cap ÷ *realized* cap (a valuation ratio). High = lots of
+  unrealised profit in the market (top risk); below 1 = many holders underwater
+  (bottom zone).
+
+### Source (free) + an honest limit
+
+We use the **Coin Metrics community API** (free, no key). It gives us **active
+addresses** for free. But **MVRV needs "realized cap", which the free tier
+blocks (403)** — so, like liquidations, MVRV needs a **paid** source. We
+implemented active addresses now and kept an `mvrv` column **ready** for when a
+paid source is added (it stays `null` for now). Honest about data availability.
+
+### Storage & use
+
+An `onchain_metrics` table (per coin, daily) with `activeAddresses` and a
+(currently null) `mvrv`. Endpoints `POST /market/onchain/import` and
+`GET /market/onchain`. The backtest aligns these daily values to candles and offers
+an **`active_addr_change`** condition (percent change of active addresses) plus a
+future-ready **`mvrv`** condition.
+
+### Verified ✅
+
+- Live: imported **1000 daily** active-address values (real, e.g. 557,508). A BTC
+  **1d** strategy that trades on active-address growth lost **−22.5% vs buy&hold
+  −42.8%** over a big decline — the network-usage signal added real value
+  in-sample.
+
 Next: the [glossary](08-glossary.md).
