@@ -130,4 +130,64 @@ returned `400`. Real market data, flowing. ✅
 - Time-series data becomes a **TimescaleDB hypertable** in production — a database
   change, not a code change.
 
+## Update — deep history by paging backwards (added later) 📜
+
+**Why we changed it.** The version above fetches candles in **one** Binance
+request. But Binance caps a single klines request at **1000 candles** — and to
+build and *trust* trading strategies we need **years** of history (many bull and
+bear markets), not just the last few hundred bars. A strategy that looks great on
+6 months of one market mood can fall apart in the next. So we taught the importer
+to go deeper.
+
+**What it was → what it became.**
+
+- **Was:** `fetchBinanceKlines(...)` did a single request; `importCandles` stored
+  that one batch (≤1000). Reading was clamped to `...1000`.
+- **Became:** the importer **pages backwards** through history. Binance lets you
+  pass an `endTime` — "give me candles ending at this moment". So we fetch a batch,
+  look at the **oldest** candle we got, then ask for the next batch ending 1ms
+  *before* that, and repeat — walking back in time until we've collected the number
+  we asked for or Binance runs out of history.
+
+```ts
+// binance.client.ts — new optional endTime, to page backwards
+const endParam = endTimeMs != null ? `&endTime=${endTimeMs}` : "";
+const url = `${baseUrl}/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}${endParam}`;
+
+// market.service.ts — loop until we have `limit` candles or history runs out
+let remaining = limit, endTimeMs;
+while (remaining > 0) {
+  const batch = await fetchBinanceKlines(baseUrl, pair, timeframe, Math.min(1000, remaining), endTimeMs);
+  if (batch.length === 0) break;
+  collected.push(...batch);
+  remaining -= batch.length;
+  const earliest = Math.min(...batch.map((c) => c.openTime.getTime()));
+  endTimeMs = earliest - 1;                 // next page ends just before this batch
+  if (batch.length < batchSize) break;      // fewer than asked = start of history
+  if (remaining > 0) await sleep(200);      // be polite to the public API
+}
+```
+
+**Three matching changes so the deep data is usable:**
+
+1. **Import limit raised** — the request DTO's `limit` max went from **1000 →
+   20000** (the service pages the API under the hood, so a caller can ask for
+   thousands at once).
+2. **Read cap raised** — `getCandles` clamp went **1000 → 5000**, otherwise we'd
+   *store* years of candles but only be able to *read back* 1000 of them (the
+   backtest engine needs the full range).
+3. **`skipDuplicates` still protects us** — paging can re-fetch an overlapping
+   candle at a page boundary; the unique key quietly drops the repeat.
+
+**Why 1ms before, and why stop on a short batch?** Subtracting 1ms makes each new
+page end *just before* the oldest candle we already have, so pages butt up against
+each other with no gap and minimal overlap. And when Binance returns **fewer**
+candles than we asked for, there's simply no older history left — so we stop.
+
+**Verified live:** deep-importing daily candles pulled BTC all the way back to
+**2017-08-17** (3254 candles) and filled 2–9 years for every one of the 10 coins —
+enough to test strategies across the 2018 bear, 2021 bull, and 2022 crash. That
+deep history is what makes an honest walk-forward success rate possible (see the
+backtest service's walk-forward lesson).
+
 Back to the [index](README.md).

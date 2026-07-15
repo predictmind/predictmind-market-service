@@ -25,7 +25,7 @@ export class MarketController {
 
   // Trigger an import from the public data source (admin/scheduled in prod).
   @Post("import")
-  import(@Body() dto: ImportCandlesDto): Promise<{ imported: number }> {
+  import(@Body() dto: ImportCandlesDto): Promise<{ imported: number; fetched: number }> {
     return this.market.importCandles(dto.symbol, dto.timeframe, dto.limit);
   }
 

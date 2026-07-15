@@ -21,8 +21,12 @@ export async function fetchBinanceKlines(
   pair: string,
   interval: string,
   limit: number,
+  endTimeMs?: number,
 ): Promise<RawCandle[]> {
-  const url = `${baseUrl}/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}`;
+  // Binance returns candles OLDER than endTime (inclusive), newest of that set
+  // last. We use endTime to page backwards through history one batch at a time.
+  const endParam = endTimeMs != null ? `&endTime=${endTimeMs}` : "";
+  const url = `${baseUrl}/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}${endParam}`;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Binance request failed (${response.status})`);

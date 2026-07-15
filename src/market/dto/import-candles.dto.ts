@@ -9,10 +9,12 @@ export class ImportCandlesDto {
   @IsIn(SUPPORTED_TIMEFRAMES as unknown as string[])
   timeframe!: string;
 
+  // Up to 20000 candles; the service pages the Binance API (max 1000/request)
+  // backwards to collect deep history.
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(1000)
+  @Max(20000)
   limit?: number;
 }

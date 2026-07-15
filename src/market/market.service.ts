@@ -21,6 +21,11 @@ export const SUPPORTED_TIMEFRAMES = [
   "1w",
 ] as const;
 
+/** Small delay so paged imports stay polite to the public Binance API. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export interface CandleDto {
   openTime: Date;
   open: string;
@@ -48,22 +53,54 @@ export class MarketService {
     }
   }
 
-  /** Import candles for a coin/timeframe from Binance and store new ones. */
+  /**
+   * Import candles for a coin/timeframe from Binance and store new ones.
+   *
+   * Binance caps one klines request at 1000 candles. To import deep history we
+   * page **backwards**: fetch a batch, then ask for the batch just before the
+   * earliest candle we got, and repeat until we've collected `limit` candles or
+   * Binance runs out of history (returns a short/empty batch).
+   */
   async importCandles(
     symbol: string,
     timeframe: string,
     limit = 500,
-  ): Promise<{ imported: number }> {
+  ): Promise<{ imported: number; fetched: number }> {
     this.assertTimeframe(timeframe);
     const coin = await this.coins.findBySymbol(symbol);
 
     const baseUrl =
       this.config.get<string>("BINANCE_API_URL") ?? "https://api.binance.com";
     const pair = `${coin.symbol}USDT`;
-    const raw = await fetchBinanceKlines(baseUrl, pair, timeframe, limit);
+    const BINANCE_MAX = 1000;
+
+    const collected: Awaited<ReturnType<typeof fetchBinanceKlines>> = [];
+    let remaining = Math.max(1, limit);
+    let endTimeMs: number | undefined = undefined;
+
+    while (remaining > 0) {
+      const batchSize = Math.min(BINANCE_MAX, remaining);
+      const batch = await fetchBinanceKlines(baseUrl, pair, timeframe, batchSize, endTimeMs);
+      if (batch.length === 0) break;
+
+      collected.push(...batch);
+      remaining -= batch.length;
+
+      // Next page ends 1ms before the earliest candle we just received.
+      const earliest = batch.reduce(
+        (min, c) => Math.min(min, c.openTime.getTime()),
+        Number.POSITIVE_INFINITY,
+      );
+      endTimeMs = earliest - 1;
+
+      // Fewer than a full batch means we've hit the start of history.
+      if (batch.length < batchSize) break;
+      // Be polite to the public API between pages.
+      if (remaining > 0) await sleep(200);
+    }
 
     const result = await this.prisma.marketCandle.createMany({
-      data: raw.map((c) => ({
+      data: collected.map((c) => ({
         coinId: coin.id,
         timeframe,
         openTime: c.openTime,
@@ -78,7 +115,7 @@ export class MarketService {
       skipDuplicates: true,
     });
 
-    return { imported: result.count };
+    return { imported: result.count, fetched: collected.length };
   }
 
   /** Read stored candles (newest first). */
@@ -93,7 +130,7 @@ export class MarketService {
     const rows = await this.prisma.marketCandle.findMany({
       where: { coinId: coin.id, timeframe },
       orderBy: { openTime: "desc" },
-      take: Math.min(Math.max(limit, 1), 1000),
+      take: Math.min(Math.max(limit, 1), 5000),
       select: {
         openTime: true,
         open: true,
