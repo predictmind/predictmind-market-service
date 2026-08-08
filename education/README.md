@@ -17,7 +17,8 @@ Read in order:
 | 7 | [07-order-flow.md](07-order-flow.md) | Extra precision signals: order-flow (#1), funding (#2), open interest (#3), long/short ratio (#4), Fear & Greed (#5), BTC context (#6), on-chain (#7) |
 | 8 | [08-stocks.md](08-stocks.md) | Adding the stock market (Yahoo Finance, free) so the whole platform works on stocks too |
 | 9 | [09-price-alerts.md](09-price-alerts.md) | Server-side price alerts that fire even when the app is closed |
-| 10 | [10-glossary.md](10-glossary.md) | Dictionary of every market-specific term |
+| 10 | [10-screener.md](10-screener.md) | Scan the whole market for setups (oversold, uptrend, near highs…) |
+| 11 | [11-glossary.md](11-glossary.md) | Dictionary of every market-specific term |
 
 > New to "server", "API", "database", "Prisma", "DTO"? The auth service's notes
 > (`predictmind-auth-service/education/`) teach those from scratch. This folder

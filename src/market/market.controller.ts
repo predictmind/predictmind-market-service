@@ -3,6 +3,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { CandleDto, MarketService } from "./market.service";
 import { IndicatorResult, IndicatorsService } from "./indicators/indicators.service";
 import { AnalysisResult, AnalysisService } from "./analysis/analysis.service";
+import { ScreenerRow, ScreenerService } from "./screener.service";
 import { SyncService, SyncSummary } from "./sync.service";
 import { ImportCandlesDto } from "./dto/import-candles.dto";
 
@@ -13,8 +14,18 @@ export class MarketController {
     private readonly market: MarketService,
     private readonly indicators: IndicatorsService,
     private readonly analysis: AnalysisService,
+    private readonly screener: ScreenerService,
     private readonly sync: SyncService,
   ) {}
+
+  // Scan all coins/stocks for a timeframe and return per-symbol screener metrics.
+  @Get("screener")
+  scan(
+    @Query("assetClass") assetClass?: string,
+    @Query("timeframe") timeframe?: string,
+  ): Promise<ScreenerRow[]> {
+    return this.screener.scan(assetClass, timeframe ?? "1d");
+  }
 
   // Manually trigger a sync of the latest candles for all active coins
   // (the same job runs automatically on a schedule). Admin/ops in production.

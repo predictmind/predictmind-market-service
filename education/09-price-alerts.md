@@ -86,4 +86,4 @@ Mounted under `market/alerts` on purpose: the gateway already proxies
 - The check runs every minute, so a very brief spike between checks could be missed;
   a minute's resolution is plenty for the swing/position style this platform favours.
 
-Next: the [glossary](10-glossary.md).
+Next: the [screener](10-screener.md), then the [glossary](11-glossary.md).

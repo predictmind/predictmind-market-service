@@ -4,11 +4,12 @@ import { AnalysisService } from "./analysis/analysis.service";
 import { IndicatorsService } from "./indicators/indicators.service";
 import { MarketController } from "./market.controller";
 import { MarketService } from "./market.service";
+import { ScreenerService } from "./screener.service";
 import { SyncService } from "./sync.service";
 
 @Module({
   imports: [CoinsModule],
   controllers: [MarketController],
-  providers: [MarketService, IndicatorsService, AnalysisService, SyncService],
+  providers: [MarketService, IndicatorsService, AnalysisService, ScreenerService, SyncService],
 })
 export class MarketModule {}

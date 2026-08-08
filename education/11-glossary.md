@@ -1,4 +1,4 @@
-# 10. Glossary (the dictionary)
+# 11. Glossary (the dictionary)
 
 Quick, simple meanings for the words used in **this** service's notes. General
 coding words (API, server, database, Prisma, DTO, module, decorator, async/await,
@@ -76,8 +76,12 @@ the **market-specific** words.
 | **Re-arm** | Reset a triggered alert back to ACTIVE so it can fire again. |
 | **x-user-id header** | The caller's id the gateway injects after verifying the login; scopes alerts to a user. |
 | **Server-side evaluation** | Checking alerts on the server on a timer, so they fire even with no browser open. |
+| **Screener** | A scan of the whole market that returns key metrics per symbol so you can find setups. |
+| **Preset (screener)** | A ready filter like "oversold" (RSI<30) or "uptrend" (price>SMA200 & EMA50>EMA200). |
+| **Snapshot scan** | Screening on *current* values (not a search over history — that's backtesting). |
+| **Distance from high** | How far below a recent high the price is, in % (0 = at the high). |
 
-With these words plus lessons 01–09, you can re-read any line of this service and
+With these words plus lessons 01–10, you can re-read any line of this service and
 know what it does and why. 🎓
 
 Back to the [index](README.md).
