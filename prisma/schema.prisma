@@ -1,0 +1,160 @@
+// PredictMind market service schema.
+// PostgreSQL via the portable DATABASE_URL contract. The `market_candles`
+// table is time-series data; in production it becomes a TimescaleDB hypertable
+// (see education notes) — locally it is a regular indexed table.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CoinStatus {
+  ACTIVE
+  DISABLED
+}
+
+model Coin {
+  id        String     @id @default(uuid()) @db.Uuid
+  symbol    String     @unique
+  name      String
+  status    CoinStatus @default(ACTIVE)
+  // Which market this symbol belongs to: "CRYPTO" (Binance) or "STOCK" (Yahoo).
+  // A plain string (not an enum) so adding it is a simple, additive column with a
+  // safe default for every existing row.
+  assetClass String    @default("CRYPTO")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  candles   MarketCandle[]
+
+  @@map("coins")
+}
+
+model MarketCandle {
+  id        BigInt   @id @default(autoincrement())
+  coinId    String   @db.Uuid
+  coin      Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  timeframe String
+  openTime  DateTime
+  open      Decimal  @db.Decimal(20, 8)
+  high      Decimal  @db.Decimal(20, 8)
+  low       Decimal  @db.Decimal(20, 8)
+  close     Decimal  @db.Decimal(20, 8)
+  volume    Decimal  @db.Decimal(30, 8)
+  // Order-flow signal: volume bought by aggressive takers + trade count.
+  // Nullable so candles imported before this feature stay valid.
+  takerBuyVolume Decimal? @db.Decimal(30, 8)
+  trades         Int?
+
+  @@unique([coinId, timeframe, openTime])
+  @@index([coinId, timeframe, openTime])
+  @@map("market_candles")
+}
+
+// Perpetual-futures funding rate history (precision signal #2). Positive funding
+// = longs pay shorts (crowded long); negative = shorts pay longs. Used only as a
+// signal — PredictMind trades spot, never leverage. Keyed by symbol (not a coin
+// FK) since funding is a market-wide series, and stored ~every 8 hours.
+model FundingRate {
+  id          String   @id @default(uuid()) @db.Uuid
+  coinSymbol  String
+  fundingRate Decimal  @db.Decimal(12, 8)
+  fundingTime DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([coinSymbol, fundingTime])
+  @@index([coinSymbol, fundingTime])
+  @@map("funding_rates")
+}
+
+// Perpetual-futures open interest history (precision signal #3): the total size
+// of open positions. Rising OI + rising price = conviction/new money; falling OI
+// = positions closing. Stored per symbol + timeframe (Binance "period"). Signal
+// only — PredictMind trades spot.
+model OpenInterest {
+  id           String   @id @default(uuid()) @db.Uuid
+  coinSymbol   String
+  timeframe    String
+  openInterest Decimal  @db.Decimal(30, 8)
+  timestamp    DateTime
+  createdAt    DateTime @default(now())
+
+  @@unique([coinSymbol, timeframe, timestamp])
+  @@index([coinSymbol, timeframe, timestamp])
+  @@map("open_interest")
+}
+
+// Global long/short account ratio (precision signal #4): the share of futures
+// accounts positioned long vs short. A contrarian crowd-positioning gauge — an
+// extremely long crowd often precedes a pullback. Stored per symbol + timeframe.
+// Signal only — PredictMind trades spot.
+model LongShortRatio {
+  id             String   @id @default(uuid()) @db.Uuid
+  coinSymbol     String
+  timeframe      String
+  longShortRatio Decimal  @db.Decimal(12, 6)
+  longAccount    Decimal  @db.Decimal(8, 6)
+  shortAccount   Decimal  @db.Decimal(8, 6)
+  timestamp      DateTime
+  createdAt      DateTime @default(now())
+
+  @@unique([coinSymbol, timeframe, timestamp])
+  @@index([coinSymbol, timeframe, timestamp])
+  @@map("long_short_ratios")
+}
+
+// Crypto Fear & Greed Index (precision signal #5): a single market-wide daily
+// number 0-100 (0 = extreme fear, 100 = extreme greed). Contrarian: extreme fear
+// often near bottoms, extreme greed near tops. Not per-coin — one series for the
+// whole market. Source: alternative.me (free, no key).
+model FearGreed {
+  id             String   @id @default(uuid()) @db.Uuid
+  value          Int
+  classification String
+  timestamp      DateTime @unique
+  createdAt      DateTime @default(now())
+
+  @@index([timestamp])
+  @@map("fear_greed")
+}
+
+// A user's price alert: "tell me when SYMBOL goes above/below PRICE". Evaluated
+// server-side on a timer so it fires even when no browser is open. Kept here in
+// the market service because that's where live prices live.
+model PriceAlert {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @default("anonymous")
+  symbol      String
+  condition   String // "above" | "below"
+  price       Decimal   @db.Decimal(20, 8)
+  status      String    @default("ACTIVE") // "ACTIVE" | "TRIGGERED"
+  note        String?
+  triggeredAt DateTime?
+  triggeredPrice Decimal? @db.Decimal(20, 8)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([symbol, status])
+  @@map("price_alerts")
+}
+
+// On-chain fundamentals (precision signal #7) from the Coin Metrics community API.
+// Per coin, daily. activeAddresses = network usage; mvrv = market cap / realized
+// cap (a valuation ratio — high = lots of unrealised profit / top risk, <1 =
+// underwater / bottom zone). Both nullable since not every metric is always free.
+model OnChainMetric {
+  id              String   @id @default(uuid()) @db.Uuid
+  coinSymbol      String
+  activeAddresses Int?
+  mvrv            Decimal? @db.Decimal(12, 6)
+  timestamp       DateTime
+  createdAt       DateTime @default(now())
+
+  @@unique([coinSymbol, timestamp])
+  @@index([coinSymbol, timestamp])
+  @@map("onchain_metrics")
+}
