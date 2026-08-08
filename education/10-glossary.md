@@ -1,4 +1,4 @@
-# 9. Glossary (the dictionary)
+# 10. Glossary (the dictionary)
 
 Quick, simple meanings for the words used in **this** service's notes. General
 coding words (API, server, database, Prisma, DTO, module, decorator, async/await,
@@ -70,8 +70,14 @@ the **market-specific** words.
 | **Ticker** | A stock's short symbol (AAPL = Apple); the stock world's word for "symbol". |
 | **Symbol-agnostic** | The rest of the platform doesn't care if a symbol is crypto or stock — it just reads candles. |
 | **Market gap** | Times with no trading (nights/weekends/holidays) — Yahoo returns null there; we skip them. |
+| **Price alert** | A standing "tell me when SYMBOL goes above/below PRICE" request. |
+| **Condition (above/below)** | Which way the price must cross the target to trigger. |
+| **ACTIVE / TRIGGERED** | An alert is armed / has fired (condition met). |
+| **Re-arm** | Reset a triggered alert back to ACTIVE so it can fire again. |
+| **x-user-id header** | The caller's id the gateway injects after verifying the login; scopes alerts to a user. |
+| **Server-side evaluation** | Checking alerts on the server on a timer, so they fire even with no browser open. |
 
-With these words plus lessons 01–08, you can re-read any line of this service and
+With these words plus lessons 01–09, you can re-read any line of this service and
 know what it does and why. 🎓
 
 Back to the [index](README.md).

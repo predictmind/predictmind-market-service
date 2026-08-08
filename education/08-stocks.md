@@ -96,4 +96,4 @@ paper-trade it exactly like a coin.
   apply to stocks; stock strategies simply use price/indicator rules (SMA, EMA, RSI,
   breakout, etc.), which are market-neutral.
 
-Next: the [glossary](09-glossary.md).
+Next: [price alerts](09-price-alerts.md), then the [glossary](10-glossary.md).

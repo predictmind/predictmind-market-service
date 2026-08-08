@@ -121,6 +121,27 @@ model FearGreed {
   @@map("fear_greed")
 }
 
+// A user's price alert: "tell me when SYMBOL goes above/below PRICE". Evaluated
+// server-side on a timer so it fires even when no browser is open. Kept here in
+// the market service because that's where live prices live.
+model PriceAlert {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @default("anonymous")
+  symbol      String
+  condition   String // "above" | "below"
+  price       Decimal   @db.Decimal(20, 8)
+  status      String    @default("ACTIVE") // "ACTIVE" | "TRIGGERED"
+  note        String?
+  triggeredAt DateTime?
+  triggeredPrice Decimal? @db.Decimal(20, 8)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([symbol, status])
+  @@map("price_alerts")
+}
+
 // On-chain fundamentals (precision signal #7) from the Coin Metrics community API.
 // Per coin, daily. activeAddresses = network usage; mvrv = market cap / realized
 // cap (a valuation ratio — high = lots of unrealised profit / top risk, <1 =
