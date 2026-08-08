@@ -22,6 +22,10 @@ model Coin {
   symbol    String     @unique
   name      String
   status    CoinStatus @default(ACTIVE)
+  // Which market this symbol belongs to: "CRYPTO" (Binance) or "STOCK" (Yahoo).
+  // A plain string (not an enum) so adding it is a simple, additive column with a
+  // safe default for every existing row.
+  assetClass String    @default("CRYPTO")
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   candles   MarketCandle[]

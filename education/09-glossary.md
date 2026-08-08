@@ -1,4 +1,4 @@
-# 8. Glossary (the dictionary)
+# 9. Glossary (the dictionary)
 
 Quick, simple meanings for the words used in **this** service's notes. General
 coding words (API, server, database, Prisma, DTO, module, decorator, async/await,
@@ -63,8 +63,15 @@ the **market-specific** words.
 | **Active addresses** | Daily count of active wallets — network usage/adoption. |
 | **MVRV** | Market cap ÷ realized cap; a valuation ratio (needs paid data — deferred). |
 | **Coin Metrics** | Free community API for on-chain metrics (active addresses). |
+| **Asset class** | Which market a symbol belongs to: `CRYPTO` (Binance) or `STOCK` (Yahoo). |
+| **Stock** | A share of a company (AAPL, MSFT) or an ETF (SPY, QQQ) — priced via Yahoo. |
+| **ETF** | Exchange-Traded Fund — a basket of assets that trades like one stock (e.g. SPY = S&P 500). |
+| **Yahoo Finance chart API** | Free, no-key endpoint we use for stock candles (intraday + daily). |
+| **Ticker** | A stock's short symbol (AAPL = Apple); the stock world's word for "symbol". |
+| **Symbol-agnostic** | The rest of the platform doesn't care if a symbol is crypto or stock — it just reads candles. |
+| **Market gap** | Times with no trading (nights/weekends/holidays) — Yahoo returns null there; we skip them. |
 
-With these words plus lessons 01–07, you can re-read any line of this service and
+With these words plus lessons 01–08, you can re-read any line of this service and
 know what it does and why. 🎓
 
 Back to the [index](README.md).

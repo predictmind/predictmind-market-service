@@ -320,4 +320,4 @@ future-ready **`mvrv`** condition.
   −42.8%** over a big decline — the network-usage signal added real value
   in-sample.
 
-Next: the [glossary](08-glossary.md).
+Next: [stocks — one platform, two markets](08-stocks.md), then the [glossary](09-glossary.md).

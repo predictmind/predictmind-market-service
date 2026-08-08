@@ -10,6 +10,7 @@ import {
   fetchCoinMetrics,
   fetchFearGreed,
 } from "./binance.client";
+import { fetchYahooKlines } from "./stock.client";
 
 export const SUPPORTED_TIMEFRAMES = [
   "1m",
@@ -68,6 +69,27 @@ export class MarketService {
   ): Promise<{ imported: number; fetched: number }> {
     this.assertTimeframe(timeframe);
     const coin = await this.coins.findBySymbol(symbol);
+
+    // Stocks come from Yahoo Finance (one call, no paging); crypto from Binance.
+    if (coin.assetClass === "STOCK") {
+      const rows = await fetchYahooKlines(coin.symbol, timeframe, Math.max(1, limit));
+      const stored = await this.prisma.marketCandle.createMany({
+        data: rows.map((c) => ({
+          coinId: coin.id,
+          timeframe,
+          openTime: c.openTime,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+          volume: c.volume,
+          takerBuyVolume: c.takerBuyVolume,
+          trades: c.trades,
+        })),
+        skipDuplicates: true,
+      });
+      return { imported: stored.count, fetched: rows.length };
+    }
 
     const baseUrl =
       this.config.get<string>("BINANCE_API_URL") ?? "https://api.binance.com";
@@ -130,7 +152,7 @@ export class MarketService {
     const rows = await this.prisma.marketCandle.findMany({
       where: { coinId: coin.id, timeframe },
       orderBy: { openTime: "desc" },
-      take: Math.min(Math.max(limit, 1), 5000),
+      take: Math.min(Math.max(limit, 1), 15000),
       select: {
         openTime: true,
         open: true,

@@ -3,7 +3,13 @@ import { Coin } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateCoinDto } from "./dto/create-coin.dto";
 
-const DEFAULT_COINS: { symbol: string; name: string }[] = [
+interface SeedCoin {
+  symbol: string;
+  name: string;
+  assetClass?: "CRYPTO" | "STOCK";
+}
+
+const DEFAULT_COINS: SeedCoin[] = [
   { symbol: "BTC", name: "Bitcoin" },
   { symbol: "ETH", name: "Ethereum" },
   { symbol: "BNB", name: "BNB" },
@@ -16,17 +22,31 @@ const DEFAULT_COINS: { symbol: string; name: string }[] = [
   { symbol: "DOT", name: "Polkadot" },
 ];
 
+// A starter set of large, liquid US stocks + ETFs. Data comes from Yahoo Finance
+// (free, no key). More can be added anytime via POST /coins with assetClass STOCK.
+const DEFAULT_STOCKS: SeedCoin[] = [
+  { symbol: "AAPL", name: "Apple", assetClass: "STOCK" },
+  { symbol: "MSFT", name: "Microsoft", assetClass: "STOCK" },
+  { symbol: "GOOGL", name: "Alphabet (Google)", assetClass: "STOCK" },
+  { symbol: "AMZN", name: "Amazon", assetClass: "STOCK" },
+  { symbol: "NVDA", name: "NVIDIA", assetClass: "STOCK" },
+  { symbol: "META", name: "Meta Platforms", assetClass: "STOCK" },
+  { symbol: "TSLA", name: "Tesla", assetClass: "STOCK" },
+  { symbol: "SPY", name: "S&P 500 ETF", assetClass: "STOCK" },
+  { symbol: "QQQ", name: "Nasdaq 100 ETF", assetClass: "STOCK" },
+];
+
 @Injectable()
 export class CoinsService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Seed the standard coin set on startup (idempotent: only inserts missing). */
+  /** Seed the standard coin + stock set on startup (idempotent: only inserts missing). */
   async onModuleInit(): Promise<void> {
-    for (const coin of DEFAULT_COINS) {
+    for (const coin of [...DEFAULT_COINS, ...DEFAULT_STOCKS]) {
       await this.prisma.coin.upsert({
         where: { symbol: coin.symbol },
-        update: {},
-        create: coin,
+        update: { assetClass: coin.assetClass ?? "CRYPTO" },
+        create: { symbol: coin.symbol, name: coin.name, assetClass: coin.assetClass ?? "CRYPTO" },
       });
     }
   }
@@ -50,7 +70,11 @@ export class CoinsService implements OnModuleInit {
 
   create(dto: CreateCoinDto): Promise<Coin> {
     return this.prisma.coin.create({
-      data: { symbol: dto.symbol.toUpperCase(), name: dto.name },
+      data: {
+        symbol: dto.symbol.toUpperCase(),
+        name: dto.name,
+        assetClass: dto.assetClass ?? "CRYPTO",
+      },
     });
   }
 }

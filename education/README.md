@@ -15,7 +15,8 @@ Read in order:
 | 5 | [05-market-analysis.md](05-market-analysis.md) | Trend, support/resistance, volatility & market regime |
 | 6 | [06-realtime-sync.md](06-realtime-sync.md) | Auto-refreshing candles on a timer + running the service in Docker |
 | 7 | [07-order-flow.md](07-order-flow.md) | Extra precision signals: order-flow (#1), funding (#2), open interest (#3), long/short ratio (#4), Fear & Greed (#5), BTC context (#6), on-chain (#7) |
-| 8 | [08-glossary.md](08-glossary.md) | Dictionary of every market-specific term |
+| 8 | [08-stocks.md](08-stocks.md) | Adding the stock market (Yahoo Finance, free) so the whole platform works on stocks too |
+| 9 | [09-glossary.md](09-glossary.md) | Dictionary of every market-specific term |
 
 > New to "server", "API", "database", "Prisma", "DTO"? The auth service's notes
 > (`predictmind-auth-service/education/`) teach those from scratch. This folder
