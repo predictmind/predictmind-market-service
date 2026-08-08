@@ -2,7 +2,7 @@ import { IsIn, IsOptional, IsString, Matches, MaxLength } from "class-validator"
 
 export class CreateCoinDto {
   @IsString()
-  @Matches(/^[A-Za-z0-9.\-]{1,15}$/, {
+  @Matches(/^[A-Za-z0-9.-]{1,15}$/, {
     message: "symbol must be 1-15 letters/digits (dots/dashes allowed for stocks)",
   })
   symbol!: string;
